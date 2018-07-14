@@ -14,8 +14,9 @@ def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument('--input', type=str, required=True, help='Input text.')
     parser.add_argument('--output', type=str, required=True, help='Output of pruned text.')
-    parser.add_argument('--strategy', choices=['mc', 'freq', 'sent-length'],
+    parser.add_argument('--strategy', choices=['mc', 'freq', 'sent-length', 'none'],
                         help='Various methods for pruning word from the input text.\n'
+                             'none: only punctuations are removed\n'
                              'mc: most-common words are pruned\n'
                              'freq: words that occur more than a certain frequency\n'
                              'sent-length: prune most-common words such that a certain sentence length is achieved ('
@@ -31,10 +32,11 @@ def create_parser() -> argparse.ArgumentParser:
 
 
 def check_args(args: argparse.Namespace) -> bool:
+    none_args = args.strategy == 'none'
     mc_args = args.strategy == 'mc' and args.mc_number
     freq_args = args.strategy == 'freq' and args.max_freq
     sent_length_args = args.strategy == 'sent-length' and args.max_sent_length
-    return mc_args or freq_args or sent_length_args
+    return none_args or mc_args or freq_args or sent_length_args
 
 
 def word_frequencies(text: List[str]) -> Counter:
@@ -57,6 +59,10 @@ def print_word_statistics(text: List[str]) -> None:
 
     print("Average word frequency: {}".format(np.mean(frequencies)))
     print("Maximum word frequency: {}".format(np.max(frequencies)))
+
+    print('10 most common words:')
+    for word, freq in word_freq.most_common(10):
+        print('{} : {}'.format(word, freq))
 
 
 def prune_text(text: List[str], filter_set: Set[str]) -> List[str]:
@@ -183,7 +189,9 @@ if __name__ == '__main__':
 
     text = prune_punctuations(text)
 
-    if args.strategy == 'mc':
+    if args.strategy == 'none':
+        pruned = text
+    elif args.strategy == 'mc':
         pruned = prune_most_common_words(text, args.mc_number)
     elif args.strategy == 'freq':
         pruned = prune_words_by_frequencies(text, args.max_freq)
