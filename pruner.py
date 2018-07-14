@@ -178,7 +178,7 @@ if __name__ == '__main__':
         import sys
         sys.exit(1)
 
-    with open('test_data', encoding='UTF-8') as input_data:
+    with open(args.input, encoding='UTF-8') as input_data:
         text = input_data.read().splitlines()
 
     text = prune_punctuations(text)
