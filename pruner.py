@@ -7,6 +7,9 @@ from typing import Callable, List, Set
 import numpy as np
 
 
+DELETED_SENTENCE_TOKEN = '<DELETED_SENTENCE>'
+
+
 # TODO: introduce argument groups for all strategies. Make --help nicer
 
 
@@ -56,6 +59,7 @@ def print_word_statistics(text: List[str]) -> None:
     print("Minimum sentence length: {}".format(np.min(line_lengths)))
     print("Average sentence length: {}".format(np.mean(line_lengths)))
     print("Maximum sentence length: {}".format(np.max(line_lengths)))
+    print("Number of deleted sentences: {}".format(word_freq[DELETED_SENTENCE_TOKEN]))
 
     print("Average word frequency: {}".format(np.mean(frequencies)))
     print("Maximum word frequency: {}".format(np.max(frequencies)))
@@ -76,6 +80,8 @@ def prune_text(text: List[str], filter_set: Set[str]) -> List[str]:
     pruned = []
     for line in text:
         pruned_line = [token for token in line.split() if token not in filter_set]
+        if not pruned_line:
+            pruned_line = [DELETED_SENTENCE_TOKEN]
         pruned.append(' '.join(pruned_line))
     return pruned
 
@@ -154,9 +160,9 @@ def prune_to_sentence_length(text: List[str], m: int) -> List[str]:
     # TODO: looks ugly - needs refactoring
     # TODO: def'd most-common method here due to not wanting decorator output
 
-    def my_most_common(text: List[str], n: int) -> List[str]:
+    def my_most_common(text: List[str], nn: int) -> List[str]:
         word_freq = word_frequencies(text)
-        most_common = word_freq.most_common(n)
+        most_common = word_freq.most_common(nn)
         most_common_words = set(word for word, freq in most_common)
         return prune_text(text, most_common_words)
 
@@ -166,14 +172,15 @@ def prune_to_sentence_length(text: List[str], m: int) -> List[str]:
         n += 1
         text_tmp = my_most_common(text, n)
         sent_lengths = sentence_lengths(text_tmp)
-        if max(sent_lengths) <= m or 0 in sent_lengths:
+        # if max(sent_lengths) <= m or 0 in sent_lengths:
+        if max(sent_lengths) <= m:
             break
 
     # prune
-    if 0 in sent_lengths:
-        print('\n~~~~~WARNING: Could not prune sentences down to length {} because '
-              'a sentence would be empty.~~~~~'.format(m))
-        return my_most_common(text, n-1)
+    # if 0 in sent_lengths:
+    #     print('\n~~~~~WARNING: Could not prune sentences down to length {} because '
+    #           'a sentence would be empty.~~~~~'.format(m))
+    #     return my_most_common(text, n-1)
     return my_most_common(text, n)
 
 
