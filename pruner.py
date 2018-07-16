@@ -10,7 +10,8 @@ import numpy as np
 DELETED_SENTENCE_TOKEN = '<DELETED_SENTENCE>'
 
 
-# TODO: introduce argument groups for all strategies. Make --help nicer
+# TODO: introduce argument groups for all strategies.
+# TODO: Make --help nicer
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -22,7 +23,8 @@ def create_parser() -> argparse.ArgumentParser:
                              'none: only punctuations are removed\n'
                              'mc: most-common words are pruned\n'
                              'freq: words that occur more than a certain frequency\n'
-                             'sent-length: prune most-common words such that a certain sentence length is achieved ('
+                             'sent-length: prune most-common words in long sentences such that a certain'
+                             'sentence length is achieved ('
                              'can fail due to low sentence length parameter)')
 
     parser.add_argument('--mc-number', type=int, help='Removes the n most common words from the text.')
