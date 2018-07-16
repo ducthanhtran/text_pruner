@@ -2,7 +2,7 @@ import argparse
 from collections import Counter
 from itertools import chain
 from string import punctuation
-from typing import Callable, List, Set
+from typing import Callable, List, Set, Tuple
 
 import numpy as np
 
@@ -158,30 +158,42 @@ def prune_to_sentence_length(text: List[str], m: int) -> List[str]:
     :return: pruned list of sentences
     """
     # TODO: looks ugly - needs refactoring
-    # TODO: def'd most-common method here due to not wanting decorator output
-
-    def my_most_common(text: List[str], nn: int) -> List[str]:
-        word_freq = word_frequencies(text)
-        most_common = word_freq.most_common(nn)
-        most_common_words = set(word for word, freq in most_common)
-        return prune_text(text, most_common_words)
-
-    # compute m parameter
-    n = 0
     while True:
-        n += 1
-        text_tmp = my_most_common(text, n)
-        sent_lengths = sentence_lengths(text_tmp)
-        # if max(sent_lengths) <= m or 0 in sent_lengths:
-        if max(sent_lengths) <= m:
-            break
+        indices, length = longest_sentences(text)
+        if length <= m:
+            return text
 
-    # prune
-    # if 0 in sent_lengths:
-    #     print('\n~~~~~WARNING: Could not prune sentences down to length {} because '
-    #           'a sentence would be empty.~~~~~'.format(m))
-    #     return my_most_common(text, n-1)
-    return my_most_common(text, n)
+        # otherwise we go on pruning
+        words_to_prune = most_common_in_sentences(text, indices)
+        text = prune_text(text, set(words_to_prune))
+
+
+def longest_sentences(text: List[str]) -> Tuple[List[int], int]:
+    longest_length = max(len(line.split()) for line in text)
+    return [index for index, line in enumerate(text) if len(line.split()) == longest_length], longest_length
+
+
+def most_common_in_sentences(text: List[str], sentence_indices: List[int]) -> Set[str]:
+    word_freq = word_frequencies(text)
+    to_be_pruned_words = set()
+
+    for index in sentence_indices:
+        sent_words = text[index].split()
+
+        if sentence_already_considered(to_be_pruned_words, sent_words):
+            continue
+
+        sent_freq = [(word_freq[word], word) for word in text[index].split()]
+        sent_freq.sort()
+        to_be_pruned_words.add(sent_freq[-1][1])
+    return to_be_pruned_words
+
+
+def sentence_already_considered(pruned_word_set: Set[str], sentence_words: List[str]) -> bool:
+    for pruned in pruned_word_set:
+        if pruned in sentence_words:
+            return True
+    return False
 
 
 if __name__ == '__main__':
